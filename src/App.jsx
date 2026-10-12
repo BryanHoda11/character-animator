@@ -186,14 +186,18 @@ function App() {
     <>
       <div className={`main-container ${fullScreen ? "" : "justify-between"} flex h-screen w-full bg-linear-to-br from-[#1e293b] via-[#0f172a] to-[#020617] overflow-hidden`}>
         <div className={`h-screen transition-all duration-500 ease-in-out ${fullScreen ? "w-full" : "w-1/2"}`}>
-          <Canvas camera={{
-            position: [0, 1.5, 5],
-            fov: 45,
-          }}>
-            <ambientLight intensity={1} />
-            <directionalLight position={[3, 5, 3]} intensity={2} />
-            <Environment preset="studio" />
 
+          <Canvas
+            camera={{
+              position: [0, 1.5, 5],
+              fov: 45,
+            }} dpr={[1, 1.5]}>
+            <ambientLight intensity={1} />
+            <directionalLight  position={[3, 5, 3]} intensity={2} />
+
+            <Suspense fallback={null}>
+              <Environment preset="studio" />
+            </Suspense>
             <Suspense fallback={<CharacterLoader />}>
               <Avatar3D character={selectedCharacter} selectedAnimation={selectedAnimation} />
             </Suspense>
@@ -252,7 +256,7 @@ function App() {
 
             <div className="grid grid-cols-2 gap-4">
               {Characters.map((character) => (
-                <button key={character.name} onClick={() => {setSelectedCharacter(character); setselectedAnimation(Animations[0]);}} className={`flex min-w-0 flex-col cursor-pointer items-center overflow-hidden rounded-xl transition-all duration-200 ${selectedCharacter.name === character.name ? "text-white " : "text-gray-600"}`}>
+                <button key={character.name} onClick={() => { setSelectedCharacter(character); setselectedAnimation(Animations[0]); }} className={`flex min-w-0 flex-col cursor-pointer items-center overflow-hidden rounded-xl transition-all duration-200 ${selectedCharacter.name === character.name ? "text-white " : "text-gray-600"}`}>
 
                   <div className="h-40 w-full overflow-hidden rounded-t-xl">
                     <img src={character.image} alt={character.name} className="h-full w-full object-contain" />

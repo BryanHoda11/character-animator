@@ -1,112 +1,78 @@
-import { useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
-import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
-export default function Avatar3D({ character, selectedAnimation }) {
+const ANIMATION_FILES = {
+    Idle: "/models/character_idle.glb",
+    Run: "/models/character_run.glb",
+    Wave: "/models/character_wave.glb",
+    Jump: "/models/character_jump.glb",
+    Fight: "/models/character_fight.glb",
+    Dance: "/models/character_dance.glb",
+    Kick: "/models/character_kick.glb",
+    Salute: "/models/character_salute.glb",
+    Push: "/models/character_push.glb",
+    Talking: "/models/character_talking.glb",
+    Gaming: "/models/character_gaming.glb",
+    Singing: "/models/character_singing.glb",
+};
 
-    const { scene } = useGLTF("/models/character_idle.glb");
-    // const { scene } = useGLTF(character.model);
+function SelectedAnimation({
+    url,
+    characterScene,
+    animationKey,
+}) {
+    const { animations } = useGLTF(url);
 
-    // const clonedScene = useMemo(() => clone(scene), [scene]);
-
-    const { animations: idleAnimation } = useGLTF(
-        "/models/character_idle.glb"
+    const { actions } = useAnimations(
+        animations,
+        characterScene
     );
-
-    const { animations: runAnimation } = useGLTF(
-        "/models/character_run.glb"
-    );
-
-    const { animations: waveAnimation } = useGLTF(
-        "/models/character_wave.glb"
-    );
-
-    const { animations: jumpAnimation } = useGLTF(
-        "/models/character_jump.glb"
-    );
-
-    const { animations: fightAnimation } = useGLTF(
-        "/models/character_fight.glb"
-    );
-
-    const { animations: danceAnimation } = useGLTF(
-        "/models/character_dance.glb"
-    );
-
-    const { animations: kickAnimation } = useGLTF(
-        "/models/character_kick.glb"
-    );
-
-    const { animations: saluteAnimation } = useGLTF(
-        "/models/character_salute.glb"
-    );
-
-    const { animations: pushAnimation } = useGLTF(
-        "/models/character_push.glb"
-    );
-
-    const { animations: talkingAnimation } = useGLTF(
-        "/models/character_talking.glb"
-    );
-
-    const { animations: gamingAnimation } = useGLTF(
-        "/models/character_gaming.glb"
-    );
-
-    const { animations: singingAnimation } = useGLTF(
-        "/models/character_singing.glb"
-    );
-
-    // Combine animations from both files
-    const animations = [...idleAnimation, ...runAnimation, ...waveAnimation, ...jumpAnimation, ...fightAnimation, ...danceAnimation, ...kickAnimation, ...saluteAnimation, ...pushAnimation, ...talkingAnimation, ...gamingAnimation, ...singingAnimation];
-    const { actions } = useAnimations(animations, scene);
-    // const { actions } = useAnimations(animations, clonedScene);
-
-    // useEffect(() => {
-    //     console.log(
-    //         "Available animations:",
-    //         animations.map((animation) => animation.name)
-    //     );
-    // }, [actions, animations]);
 
     useEffect(() => {
-        if (!selectedAnimation || !actions) return;
+        const clip = animations.find((item) => item.name === animationKey) ?? animations[0];
+        if (!clip) return;
 
-        Object.values(actions).forEach((action) => { action?.stop(); });
+        const action = actions[clip.name];
+        if (!action) return;
 
-        const action = actions[selectedAnimation.animation];
-
-        if (!action) {
-            console.log("Animation not found:", selectedAnimation.animation);
-            return;
-        }
+        Object.values(actions).forEach((item) => {
+            if (item && item !== action) {
+                item.stop();
+            }
+        });
 
         action.reset().fadeIn(0.2).play();
 
         return () => {
             action.fadeOut(0.2);
         };
-    }, [selectedAnimation, actions, character.model]);
+    }, [animations, actions, animationKey]);
+
+    return null;
+}
+
+// The idle file supplies both the initial mesh and Idle animation.
+export default function Avatar3D({
+    character,
+    selectedAnimation,
+}) {
+    const { scene } = useGLTF("/models/character_idle.glb");
+
+    const characterScene = useMemo(
+        () => scene,
+        [scene]
+    );
+
+    const animationKey = selectedAnimation?.animation ?? "Idle";
+    const url = ANIMATION_FILES[animationKey] ?? ANIMATION_FILES.Idle;
 
     return (
-        <group rotation={selectedAnimation.rotation}>
-            <primitive object={scene} scale={1.5} position={[0, -1.55, 0]} />
+        <group rotation={selectedAnimation?.rotation ?? [0, 0, 0]}>
+            <primitive object={characterScene} scale={1.5} position={[0, -1.55, 0]} />
+
+            <Suspense fallback={null}>
+                <SelectedAnimation key={url} url={url} characterScene={characterScene} animationKey={animationKey} />
+            </Suspense>
         </group>
     );
 }
-
-useGLTF.preload("/models/Adam.glb");
-useGLTF.preload("/models/Remy.glb");
-
-useGLTF.preload("/models/character_idle.glb");
-useGLTF.preload("/models/character_run.glb");
-useGLTF.preload("/models/character_wave.glb");
-useGLTF.preload("/models/character_jump.glb");
-useGLTF.preload("/models/character_fight.glb");
-useGLTF.preload("/models/character_dance.glb");
-useGLTF.preload("/models/character_kick.glb");
-useGLTF.preload("/models/character_salute.glb");
-useGLTF.preload("/models/character_push.glb");
-useGLTF.preload("/models/character_talking.glb");
-useGLTF.preload("/models/character_gaming.glb");
-useGLTF.preload("/models/character_singing.glb");
